@@ -1,0 +1,15 @@
+{
+  "name": "covid19",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Tuan Anh Tran <me@tuananh.org>",
+  "license": "MIT",
+  "dependencies": {
+    "lodash": "^4.17.15",
+    "papaparse": "^5.1.1"
+  }
+}
