@@ -1,5 +1,5 @@
 const { parse } = require('papaparse')
-const { groupBy, sum, sumBy, toNumber } = require('lodash')
+const { groupBy, orderBy, sumBy, toNumber } = require('lodash')
 
 const baseUrl =
     'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/'
@@ -44,7 +44,7 @@ function processCSVData(inputCsv) {
         })
     }
 
-    const finalOutput = []
+    let finalOutput = []
     const groupedByCountry = groupBy(rowAggregated, 'country')
 
     for (const country of Object.keys(groupedByCountry)) {
@@ -56,6 +56,8 @@ function processCSVData(inputCsv) {
             last_7_days: sumBy(group, 'last_7_days')
         })
     }
+
+    finalOutput = orderBy(finalOutput, ['total'], ['desc'])
 
     return finalOutput
 }
