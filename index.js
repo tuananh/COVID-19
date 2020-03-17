@@ -59,7 +59,7 @@ function processCSVData(inputCsv, type) {
         })
     }
 
-    finalOutput = orderBy(finalOutput, ['total'], ['desc'])
+    finalOutput = orderBy(finalOutput, ['confirm.total', 'death.total'], ['desc', 'desc'])
 
     return finalOutput
 }
