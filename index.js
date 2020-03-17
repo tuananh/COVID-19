@@ -76,7 +76,7 @@ function aggregateData({ confirmCases, deathCases, recoverCases }) {
 
 async function handleRequest(request) {
     const responses = await Promise.all(
-        urls.map(url => fetch(url, { cf: { cacheTtl: 0 } }))
+        urls.map(url => fetch(url, { cf: { cacheTtl: 300 } }))
     )
     const [confirmCsv, deathCsv, recoverCsv] = await Promise.all(
         responses.map(gatherResponse)
