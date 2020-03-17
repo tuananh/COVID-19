@@ -44,8 +44,8 @@ COVID-19 API
       "last_7_days": 1695
     }
   }
-  // ...
 }
+
 ## TODO
 
 [] Implement `curl` command
