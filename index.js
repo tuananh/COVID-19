@@ -1,5 +1,5 @@
 const { parse } = require('papaparse')
-const { groupBy, orderBy, sumBy, toNumber } = require('lodash')
+const { groupBy, orderBy, sumBy, toNumber, merge, keyBy } = require('lodash')
 
 const baseUrl =
     'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/'
@@ -29,7 +29,7 @@ async function gatherResponse(response) {
     }
 }
 
-function processCSVData(inputCsv) {
+function processCSVData(inputCsv, type) {
     const rowAggregated = []
     const { data } = parse(inputCsv)
     for (let i = 1; i < data.length; i += 1) {
@@ -38,7 +38,7 @@ function processCSVData(inputCsv) {
         const totalDays = ts.length
         rowAggregated.push({
             country: row[1],
-            total: ts[totalDays-1], // because it's ts data (its already aggregated)
+            total: ts[totalDays - 1], // because it's ts data (its already aggregated)
             yesterday: ts[totalDays - 1] - ts[totalDays - 2],
             last_7_days: ts[totalDays - 1] - ts[totalDays - 8]
         })
@@ -48,12 +48,14 @@ function processCSVData(inputCsv) {
     const groupedByCountry = groupBy(rowAggregated, 'country')
 
     for (const country of Object.keys(groupedByCountry)) {
-        const group = groupedByCountry[country]        
+        const group = groupedByCountry[country]
         finalOutput.push({
             country,
-            total: sumBy(group, 'total'),
-            yesterday: sumBy(group, 'yesterday'),
-            last_7_days: sumBy(group, 'last_7_days')
+            [type]: {
+                total: sumBy(group, 'total'),
+                yesterday: sumBy(group, 'yesterday'),
+                last_7_days: sumBy(group, 'last_7_days')
+            }
         })
     }
 
@@ -63,36 +65,12 @@ function processCSVData(inputCsv) {
 }
 
 function aggregateData({ confirmCases, deathCases, recoverCases }) {
-    const output = {}
-
-    for (let i = 0; i < recoverCases.length; i += 1) {
-        const row = recoverCases[i]
-        if (!output[row.country]) {
-            output[row.country] = {}
-        } else {
-            output[row.country]['recover'] = row
-        }
-    }
-
-    for (let i = 0; i < confirmCases.length; i += 1) {
-        const row = confirmCases[i]
-        if (!output[row.country]) {
-            output[row.country] = {}
-        } else {
-            output[row.country]['confirm'] = row
-        }
-    }
-
-    for (let i = 0; i < deathCases.length; i += 1) {
-        const row = deathCases[i]
-        if (!output[row.country]) {
-            output[row.country] = {}
-        } else {
-            output[row.country]['death'] = row
-        }
-    }
-
-    return output
+    const merged = merge(
+        keyBy(confirmCases, 'country'),
+        keyBy(recoverCases, 'country'),
+        keyBy(deathCases, 'country')
+    )
+    return merged
 }
 
 async function handleRequest(request) {
@@ -106,14 +84,14 @@ async function handleRequest(request) {
     // we want this output format:
     // country | confirmed | recovered | death | 1 day | 1 week
 
-    const confirmCases = processCSVData(confirmCsv)
-    const deathCases = processCSVData(deathCsv)
-    const recoverCases = processCSVData(recoverCsv)
-    const finalOutput = {
+    const confirmCases = processCSVData(confirmCsv, 'confirm')
+    const deathCases = processCSVData(deathCsv, 'death')
+    const recoverCases = processCSVData(recoverCsv, 'recover')
+    const finalOutput = aggregateData({
         confirmCases,
         deathCases,
         recoverCases
-    }
+    })
 
     const init = {
         headers: {
