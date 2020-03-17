@@ -1,5 +1,6 @@
 const { parse } = require('papaparse')
 const { groupBy, orderBy, sumBy, toNumber, merge, keyBy } = require('lodash')
+const Table = require('cli-table');
 
 const baseUrl =
     'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/'
@@ -93,14 +94,22 @@ async function handleRequest(request) {
         recoverCases
     })
 
+    const table = new Table({
+        head: ['Country', 'Confirm', 'Deaths', 'Recover', 'Deaths yesterday', 'Deaths last 7 days']
+    })
+
+    for (const key of Object.keys(finalOutput)) {
+        const row = finalOutput[key]
+        table.push([row.country, row.confirm.total, row.death.total, row.recover.total, row.death.yesterday, row.death.last_7_days])
+    }
+
     const init = {
         headers: {
-            'content-type': type
+            'Content-Type': 'text/html;charset=UTF-8',
+            'Cache-Control': 'max-age=300'
         }
     }
-    const resp = new Response(JSON.stringify(finalOutput, null, 2), init)
-    resp.headers.set('Cache-Control', 'max-age=300')
-    return resp
+    return new Response(table.toString(), init)
 }
 
 addEventListener('fetch', event => {
