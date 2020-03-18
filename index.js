@@ -74,6 +74,24 @@ function aggregateData({ confirmCases, deathCases, recoverCases }) {
     return merged
 }
 
+function render(str) {
+    return `
+    <html lang="en">
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>COVID19 stats</title>
+            <style>
+                pre {
+                    font-family: Consolas, Monaco, monospace;
+                }
+            </style>
+        </head>
+        <body><pre>${str}</pre></body>
+    </html>
+`
+}
+
 async function handleRequest(request) {
     const responses = await Promise.all(
         urls.map(url => fetch(url, { cf: { cacheTtl: 300 } }))
@@ -109,7 +127,13 @@ async function handleRequest(request) {
             'Cache-Control': 'max-age=300'
         }
     }
-    return new Response(table.toString(), init)
+
+    const agent = request.headers.get('User-Agent')
+    if (agent && agent.includes('curl')) {
+        return new Response(table.toString(), init)
+    } else {
+        return new Response(render(table.toString()), init)
+    }
 }
 
 addEventListener('fetch', event => {
